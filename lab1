@@ -19,9 +19,11 @@ int main(void) {
         char child[8] = "child";
         char parent[8] = "parent";
         //printf("parent\n");
-        if (pthread_create(&thread, NULL, print, child) != 0)
+        if (pthread_create(&thread, NULL, print, child) != 0) {
                 fprintf(stderr, "Unable to create thread!");
+                exit(EXIT_FAILURE);
+        }
         print(parent);
         sleep(10);
-        return 0;
+        return EXIT_SUCCESS;
 }
