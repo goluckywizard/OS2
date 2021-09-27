@@ -1,4 +1,3 @@
-  GNU nano 4.7                         main.c
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
