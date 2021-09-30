@@ -26,7 +26,10 @@ int main(void) {
         parentText = "parent";
         int err = pthread_create(&thread, NULL, print, childText);
         if (err != PTHREAD_CREATE_SUCCESS) {
-                perror("Unable to create thread!");
+                char str[BUFSIZ];
+                strerror_r(err, str, BUFSIZ);
+                fprintf(stderr, "%s", str);
+                free(childText);
                 exit(EXIT_FAILURE);
         }
         print(parentText);
