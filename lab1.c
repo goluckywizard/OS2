@@ -22,8 +22,8 @@ int main(void) {
         pthread_t thread;
         char *childText = (char*)malloc(sizeof(char)*LENGTH_OF_ARG);
         char *parentText = (char*)malloc(sizeof(char)*LENGTH_OF_ARG);
-        childText = "child";
-        parentText = "parent";
+        strcpy(childText, "child");
+        strcpy(parentText, "parent");
         int err = pthread_create(&thread, NULL, print, childText);
         if (err != PTHREAD_CREATE_SUCCESS) {
                 char str[BUFSIZ];
