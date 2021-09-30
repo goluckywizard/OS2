@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <thread.h>
+#include <string.h>
 
 static const int PTHREAD_CREATE_SUCCESS = 0;
 
@@ -26,9 +27,7 @@ int main(void) {
         strcpy(parentText, "parent");
         int err = pthread_create(&thread, NULL, print, childText);
         if (err != PTHREAD_CREATE_SUCCESS) {
-                char str[BUFSIZ];
-                strerror_r(err, str, BUFSIZ);
-                fprintf(stderr, "%s", str);
+                perror("Unable to create thread");
                 free(childText);
                 exit(EXIT_FAILURE);
         }
