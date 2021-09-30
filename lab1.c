@@ -21,12 +21,14 @@ int main(void) {
         const int LENGTH_OF_ARG = 10;
         pthread_t thread;
         char *childText = (char*)malloc(sizeof(char)*LENGTH_OF_ARG);
+        char *parentText = (char*)malloc(sizeof(char)*LENGTH_OF_ARG);
         childText = "child";
+        parentText = "parent";
         int err = pthread_create(&thread, NULL, print, childText);
         if (err != PTHREAD_CREATE_SUCCESS) {
                 perror("Unable to create thread!");
                 exit(EXIT_FAILURE);
         }
-        print("parent");
+        print(parentText);
         pthread_exit(EXIT_SUCCESS);
 }
