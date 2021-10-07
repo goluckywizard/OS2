@@ -35,6 +35,7 @@ int main(void) {
         err = pthread_join(thread, NULL);
         if (err != PTHREAD_JOIN_SUCCESS) {
                 perror("Unable to join thread");
+                free(parentText);
                 exit(EXIT_FAILURE);
         }
         print(parentText);
