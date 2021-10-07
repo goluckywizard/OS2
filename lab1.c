@@ -29,6 +29,7 @@ int main(void) {
         if (err != PTHREAD_CREATE_SUCCESS) {
                 perror("Unable to create thread");
                 free(childText);
+                free(parentText);
                 exit(EXIT_FAILURE);
         }
         print(parentText);
