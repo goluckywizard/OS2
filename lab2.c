@@ -14,27 +14,21 @@ void *print(char *arg) {
         int i = 0;
         for (i = 0; i < 10; ++i)
                 printf("%s%d\n", arg, i);
-        free(arg);
         return EXIT_SUCCESS;
 }
 
 int main(void) {
-        const int LENGTH_OF_ARG = 10;
         pthread_t thread;
-        char *childText = (char*)malloc(sizeof(char)*LENGTH_OF_ARG);
-        char *parentText = (char*)malloc(sizeof(char)*LENGTH_OF_ARG);
-        strcpy(childText, "child");
-        strcpy(parentText, "parent");
+        char *childText = "child";
+        char *parentText = "parent";
         int err = pthread_create(&thread, NULL, print, childText);
         if (err != PTHREAD_CREATE_SUCCESS) {
                 perror("Unable to create thread");
-                free(childText);
                 exit(EXIT_FAILURE);
         }
         err = pthread_join(thread, NULL);
         if (err != PTHREAD_JOIN_SUCCESS) {
                 perror("Unable to join thread");
-                free(parentText);
                 exit(EXIT_FAILURE);
         }
         print(parentText);
