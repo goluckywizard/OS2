@@ -13,6 +13,7 @@
 #define MIN_THREADS_COUNT 1
 #define MAX_THREADS_COUNT 100000
 #define MIN_ITERATION_COUNT 1
+#define THREAD_SUCCESS 0
 
 typedef enum en_parseInputArgsError {
     parse_SUCCESS,
@@ -24,12 +25,6 @@ typedef enum en_parseInputArgsError {
     parse_ARGS_DONT_MATCH
 } parseInputArgsError;
 
-typedef enum en_threadError {
-    SUCCESS = 0,
-    THREAD_CREATE_ERROR,
-    THREAD_JOIN_ERROR
-} threadError;
-
 typedef struct st_inputArgs {
     int numThreads;
     int numIterations;
@@ -40,13 +35,12 @@ typedef struct st_threadFuncArg {
     int shift;
     double partialSum;
 } threadFuncArg;
-
 int parseInputData(int argc, char **argv, inputArgs *argsValues) {
     if (argc != CORRECT_ARGS_COUNT)
         return parse_INVALID_ARGS_COUNT;
     int i = 0;
     do {
-    if (isdigit(argv[1][i]) == NOT_DIGIT) {
+        if (isdigit(argv[1][i]) == NOT_DIGIT) {
             return parse_NOT_POSITIVE_NUMBER;
         }
         i++;
@@ -149,22 +143,22 @@ int collectPartialSums(pthread_t *threadsID, int threads_count, double *result) 
     for (int i = 0; i < threads_count; ++i) {
         void *partialSum;
         int error = pthread_join(threadsID[i], &partialSum);
-        if (error != SUCCESS) {
-            return THREAD_JOIN_ERROR;
+        if (error != THREAD_SUCCESS) {
+            return error;
         }
         *result += *((double *)partialSum);
     }
-    return SUCCESS;
+    return THREAD_SUCCESS;
 }
 int create_threads(int threads_count, void *(*thread_task)(void*), threadFuncArg *args, pthread_t *threadsID) {
     int error_num;
     for (int i = 0; i < threads_count; ++i) {
         error_num = pthread_create(&threadsID[i], NULL, thread_task, &args[i]);
-        if (error_num != SUCCESS) {
-            return THREAD_CREATE_ERROR;
+        if (error_num != THREAD_SUCCESS) {
+            return error_num;
         }
     }
-    return SUCCESS;
+    return THREAD_SUCCESS;
 }
 int calculatePI(int threads_count, int iterations_count, double *result) {
     threadFuncArg threadsArgs[threads_count];
@@ -172,18 +166,16 @@ int calculatePI(int threads_count, int iterations_count, double *result) {
 
     pthread_t threadsID[threads_count];
     int error = create_threads(threads_count, calculatePartialSum, threadsArgs, threadsID);
-    if (error != SUCCESS) {
+    if (error != THREAD_SUCCESS) {
         return error;
     }
     error = collectPartialSums(threadsID, threads_count, result);
-    if (error != SUCCESS) {
+    if (error != THREAD_SUCCESS) {
         return error;
     }
     *result *= 4;
-    return SUCCESS;
+    return THREAD_SUCCESS;
 }
-
-
 int main(int argc, char *argv[]) {
     inputArgs args;
     int parse_result = parseInputData(argc, argv, &args);
@@ -194,7 +186,7 @@ int main(int argc, char *argv[]) {
     //printf("%d %d\n", args.numThreads, args.numIterations);
     double pi;
     int error = calculatePI(args.numThreads, args.numIterations, &pi);
-    if (error != SUCCESS) {
+    if (error != THREAD_SUCCESS) {
         char str[BUF_SIZE];
         strerror_r(error, str, BUF_SIZE);
         fprintf(stderr, "%s\n", str);
