@@ -40,7 +40,6 @@ typedef struct st_threadFuncArg {
     int shift;
     double partialSum;
 } threadFuncArg;
-
 int parseInputData(int argc, char **argv, inputArgs *argsValues) {
     if (argc != CORRECT_ARGS_COUNT)
         return parse_INVALID_ARGS_COUNT;
@@ -82,7 +81,6 @@ int parseInputData(int argc, char **argv, inputArgs *argsValues) {
     }
     return parse_SUCCESS;
 }
-
 void print_parse_error(int error_code) {
     switch (error_code) {
         case parse_INVALID_ARGS_COUNT: {
@@ -115,7 +113,6 @@ void print_parse_error(int error_code) {
         }
     }
 }
-
 void create_thread_args(threadFuncArg *thread_args, int threads_count, int iterations_count) {
     int iterations_per_thread = iterations_count / threads_count;
     int extra_iterations = iterations_count % threads_count;
@@ -144,17 +141,17 @@ void *calculatePartialSum(void *thread_arg) {
             arg->partialSum -= 1.0 / (i * 2.0 + 1.0);
         }
     }
-    pthread_exit(&(arg->partialSum));
+    pthread_exit(EXIT_SUCCESS);
 }
-int collectPartialSums(pthread_t *threadsID, int threads_count, double *result) {
+int collectPartialSums(pthread_t *threadsID, threadFuncArg *args, int threads_count, double *result) {
     *result = 0;
     for (int i = 0; i < threads_count; ++i) {
-        void *partialSum;
-        int error = pthread_join(threadsID[i], &partialSum);
+        //void *partialSum;
+        int error = pthread_join(threadsID[i], NULL);
         if (error != SUCCESS) {
             return THREAD_JOIN_ERROR;
         }
-        *result += *((double *)partialSum);
+        *result += args[i].partialSum;
     }
     return SUCCESS;
 }
@@ -177,14 +174,13 @@ int calculatePI(int threads_count, int iterations_count, double *result) {
     if (error != SUCCESS) {
         return error;
     }
-    error = collectPartialSums(threadsID, threads_count, result);
+    error = collectPartialSums(threadsID, threadsArgs, threads_count, result);
     if (error != SUCCESS) {
         return error;
     }
     *result *= 4;
     return SUCCESS;
 }
-
 
 int main(int argc, char *argv[]) {
     inputArgs args;
@@ -193,7 +189,7 @@ int main(int argc, char *argv[]) {
         print_parse_error(parse_result);
         return EXIT_FAILURE;
     }
-    printf("%d %d\n", args.numThreads, args.numIterations);
+    //printf("%d %d\n", args.numThreads, args.numIterations);
     double pi;
     int error = calculatePI(args.numThreads, args.numIterations, &pi);
     if (error != SUCCESS) {
