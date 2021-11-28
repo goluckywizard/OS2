@@ -17,8 +17,18 @@ typedef struct st_Args {
 } Args;
 
 int init_mutexes(pthread_mutex_t *mutexes) {
+    pthread_mutexattr_t mutex_attr;
+    int error;
+    error = pthread_mutexattr_init(&mutex_attr);
+    if (error != PTHREAD_SUCCESS) {
+        return error;
+    }
+    error = pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_ERRORCHECK);
+    if (error != PTHREAD_SUCCESS) {
+        return error;
+    }
     for (int i = 0; i < MUTEX_COUNT; ++i) {
-        int error = pthread_mutex_init(&(mutexes[i]), NULL);
+        error = pthread_mutex_init(&(mutexes[i]), &mutex_attr);
         if (error != PTHREAD_SUCCESS) {
             return error;
         }
@@ -133,7 +143,7 @@ int main(void) {
     pthread_join(thread, NULL);
 
     errno = destroy_mutexes(mutexes);
-    if (destroy_error != PTHREAD_SUCCESS) {
+    if (errno != PTHREAD_SUCCESS) {
         perror("Mutexes destroy error");
         destroy_mutexes(mutexes);
         return EXIT_FAILURE;
