@@ -35,6 +35,10 @@ int init_mutexes(pthread_mutex_t *mutexes) {
             return error;
         }
     }
+    error = pthread_mutexattr_destroy(&mutex_attr);
+    if (error != PTHREAD_SUCCESS) {
+        return error;
+    }
     return PTHREAD_SUCCESS;
 }
 void *print(void *argument) {
@@ -43,7 +47,7 @@ void *print(void *argument) {
         //printf("second thread mutex: %p\n", &(arg->mutexes[(arg->cur_thread) % 3]));
         errno = pthread_mutex_lock(&(arg->mutexes[(arg->cur_thread) % 3]));
         if (errno != PTHREAD_SUCCESS) {
-            perror("Mutex lock error");
+            perror("Unable to lock in child thread before print function");
             return EXIT_FAILURE;
         }
     }
@@ -51,46 +55,46 @@ void *print(void *argument) {
     for (int i = 0; i < 10; ++i) {
         errno = pthread_mutex_lock(&(arg->mutexes[(arg->cur_thread + 2) % 3]));
         if (errno != PTHREAD_SUCCESS) {
-            perror("Mutex lock error");
-            return;
+            perror("Unable to lock mutex in print function");
+            return EXIT_FAILURE;
         }
 
         printf("%s %d\n", arg->text, i);
 
         errno = pthread_mutex_unlock(&(arg->mutexes[arg->cur_thread]));
         if (errno != PTHREAD_SUCCESS) {
-            perror("Mutex unlock error");
-            return;
+            perror("Unable to unlock mutex in print function");
+            return EXIT_FAILURE;
         }
 
         errno = pthread_mutex_lock(&(arg->mutexes[(arg->cur_thread + 1) % 3]));
         if (errno != PTHREAD_SUCCESS) {
-            perror("Mutex lock error");
-            return;
+            perror("Unable to lock mutex in print function");
+            return EXIT_FAILURE;
         }
 
         errno = pthread_mutex_unlock(&(arg->mutexes[(arg->cur_thread + 2) % 3]));
         if (errno != PTHREAD_SUCCESS) {
-            perror("Mutex unlock error");
-            return;
+            perror("Unable to unlock mutex in print function");
+            return EXIT_FAILURE;
         }
 
         errno = pthread_mutex_lock(&(arg->mutexes[arg->cur_thread]));
         if (errno != PTHREAD_SUCCESS) {
-            perror("Mutex lock error");
-            return;
+            perror("Unable to lock mutex in print function");
+            return EXIT_FAILURE;
         }
         errno = pthread_mutex_unlock(&(arg->mutexes[(arg->cur_thread + 1) % 3]));
         if (errno != PTHREAD_SUCCESS) {
-            perror("Mutex unlock error");
-            return;
+            perror("Unable to unlock mutex in print function");
+            return EXIT_FAILURE;
         }
     }
 
     if (arg->cur_thread == SECOND_THREAD) {
         errno = pthread_mutex_unlock(&(arg->mutexes[(arg->cur_thread) % 3]));
         if (errno != PTHREAD_SUCCESS) {
-            perror("Mutex unlock error");
+            perror("Unable to unlock in child thread before print function");
             return;
         }
     }
@@ -126,7 +130,7 @@ int main(void) {
     pthread_t thread;
     errno = pthread_mutex_lock(&(arg1.mutexes[(FIRST_THREAD) % 3]));
     if (errno != PTHREAD_SUCCESS) {
-        perror("Lock error");
+        perror("Unable to lock in parent thread before print function");
         return EXIT_FAILURE;
     }
 
@@ -142,14 +146,21 @@ int main(void) {
     
     errno = pthread_mutex_unlock(&(arg1.mutexes[(FIRST_THREAD) % 3]));
     if (errno != PTHREAD_SUCCESS) {
-        perror("Unlock error");
+        perror("Unable to unlock in parent thread after print function");
         destroy_mutexes(mutexes);
         return EXIT_FAILURE;
     }
-
-    errno = pthread_join(thread, NULL);
+    int print_result;
+    errno = pthread_join(thread, (void **)&print_result);
+    
     if (errno != PTHREAD_SUCCESS) {
         perror("Unable to join thread");
+        destroy_mutexes(mutexes);
+        return EXIT_FAILURE;
+    }
+    
+    if (print_result != EXIT_SUCCESS) {
+        fprintf(stderr, "Error while executing print function!\n");
         destroy_mutexes(mutexes);
         return EXIT_FAILURE;
     }
