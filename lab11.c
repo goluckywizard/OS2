@@ -94,7 +94,7 @@ void *print(void *argument) {
     if (arg->cur_thread == SECOND_THREAD) {
         errno = pthread_mutex_unlock(&(arg->mutexes[(arg->cur_thread) % 3]));
         if (errno != PTHREAD_SUCCESS) {
-            perror("Unable to unlock in child thread before print function");
+            perror("Unable to unlock in child thread after print function");
             return;
         }
     }
