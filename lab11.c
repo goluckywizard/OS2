@@ -9,6 +9,8 @@
 #define MUTEX_COUNT 3
 #define FIRST_THREAD 0
 #define SECOND_THREAD 1
+#define ONE_SECOND 1
+#define STR_SIZE 10
 
 typedef struct st_Args {
     pthread_mutex_t *mutexes;
@@ -42,7 +44,7 @@ void *print(void *argument) {
         errno = pthread_mutex_lock(&(arg->mutexes[(arg->cur_thread) % 3]));
         if (errno != PTHREAD_SUCCESS) {
             perror("Mutex lock error");
-            return;
+            return EXIT_FAILURE;
         }
     }
 
@@ -78,7 +80,6 @@ void *print(void *argument) {
             perror("Mutex lock error");
             return;
         }
-
         errno = pthread_mutex_unlock(&(arg->mutexes[(arg->cur_thread + 1) % 3]));
         if (errno != PTHREAD_SUCCESS) {
             perror("Mutex unlock error");
@@ -93,9 +94,8 @@ void *print(void *argument) {
             return;
         }
     }
-    pthread_exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
 }
-
 int destroy_mutexes(pthread_mutex_t *mutexes) {
     for (int i = 0; i < MUTEX_COUNT; ++i) {
         int error = pthread_mutex_destroy(&mutexes[i]);
@@ -105,7 +105,6 @@ int destroy_mutexes(pthread_mutex_t *mutexes) {
     }
     return PTHREAD_SUCCESS;
 }
-
 int main(void) {
     pthread_mutex_t mutexes[MUTEX_COUNT];
     errno = init_mutexes(mutexes);
@@ -114,8 +113,8 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
-    char child[10] = "Child";
-    char parent[10] = "Parent";
+    char child[STR_SIZE] = "Child";
+    char parent[STR_SIZE] = "Parent";
     Args arg1, arg2;
     arg1.cur_thread = FIRST_THREAD;
     arg1.mutexes = mutexes;
@@ -131,16 +130,29 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
-    pthread_create(&thread, NULL, print, &arg2);
-    sleep(1);
+    errno = pthread_create(&thread, NULL, print, &arg2);
+    if (errno != PTHREAD_SUCCESS) {
+        perror("Unable to create thread");
+        destroy_mutexes(mutexes);
+        return EXIT_FAILURE;
+    }
+    sleep(ONE_SECOND);
+
     print(&arg1);
+    
     errno = pthread_mutex_unlock(&(arg1.mutexes[(FIRST_THREAD) % 3]));
     if (errno != PTHREAD_SUCCESS) {
         perror("Unlock error");
         destroy_mutexes(mutexes);
         return EXIT_FAILURE;
     }
-    pthread_join(thread, NULL);
+
+    errno = pthread_join(thread, NULL);
+    if (errno != PTHREAD_SUCCESS) {
+        perror("Unable to join thread");
+        destroy_mutexes(mutexes);
+        return EXIT_FAILURE;
+    }
 
     errno = destroy_mutexes(mutexes);
     if (errno != PTHREAD_SUCCESS) {
