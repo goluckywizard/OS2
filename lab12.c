@@ -20,12 +20,16 @@ typedef struct st_Args {
 } Args;
 
 int semaphore_initialization(sem_t *semaphores) {
-    for (int i = 0; i < COUNT_SEMAPHORES; ++i) {
-        int error = sem_init(&semaphores[i], NOT_PROCESS_SHARED, i);
-        if (error != PTHREAD_SUCCESS) {
-            return error;
-        }
+    int error = sem_init(&semaphores[FIRST_THREAD], NOT_PROCESS_SHARED, FIRST_THREAD);
+    if (error != PTHREAD_SUCCESS) {
+        return error;
     }
+    
+    error = sem_init(&semaphores[SECOND_THREAD], NOT_PROCESS_SHARED, SECOND_THREAD);
+    if (error != PTHREAD_SUCCESS) {
+        return error;
+    }
+    
     return PTHREAD_SUCCESS;
 }
 int semaphore_destroy(sem_t *semaphores) {
